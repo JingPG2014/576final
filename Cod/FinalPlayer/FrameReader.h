@@ -1,3 +1,5 @@
+/* This is a class that handle the I/O processing from the rgb file
+*/
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
@@ -15,7 +17,7 @@ private:
 	double		Width;
 	double		Height;
 	char	ImagePath[_MAX_PATH];
-	char*	Data;
+	char*	Data;// One frame data
 	ifstream ifs;
 
 public:

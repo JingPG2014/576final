@@ -273,7 +273,7 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 
 
     // Remember the path for next time
-	USES_CONVERSION;
+/*	USES_CONVERSION;
 	char * _strFileName= T2A(strFileName);
   // strcpy( strPath, _strFileName );
 	
@@ -299,11 +299,10 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 	g_pFrameManager->setBufferSize(4);
 	g_pFrameManager->setLoadingPos(60);
 
-	g_pFrameManager->fillBuffer();*/
+	g_pFrameManager->fillBuffer();
 	//myImage.setImagePath(VideoPath);
 	//myImage.ReadImage(); 
-/**/
-	// Slider
+*/
 
 }
 
