@@ -48,6 +48,7 @@ public:
 	bool  isEnd(){ return bIsEnd;}
 	int  getWidth(){ return iWidth;}
 	int  getHeight(){ return iHeight;}
+	int  getFrameRate(){ return iRate;}
 	bool fillBuffer();
 	bool reFillBuffer();
 	char* renderOneFrame();

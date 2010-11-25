@@ -63,15 +63,18 @@ public:
 	afx_msg void OnBnClickedPlaybtn();
 	afx_msg void OnBnClickedStopbtn();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnBnClickedVedioplaybtn();
+	afx_msg void OnNMCustomdrawTimesld(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedStopvediobtn();
 
 	HRESULT AudioJumpping(double dPercent);
+	bool VideoJumpping(double dPos);
 	void ShowCurrentTime(int pos);
 	bool PlayVedio();
 	bool StopVedio();
-	afx_msg void OnBnClickedVedioplaybtn();
-	afx_msg void OnNMCustomdrawTimesld(NMHDR *pNMHDR, LRESULT *pResult);
+	
 	CStatic m_VolumeTxt;
-	afx_msg void OnBnClickedStopvediobtn();
+	
 	void forTest();
 	static UINT LoadThreadFun(LPVOID lpParam);
 };
