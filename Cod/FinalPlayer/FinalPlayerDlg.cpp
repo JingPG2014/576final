@@ -209,9 +209,10 @@ void CFinalPlayerDlg::OnNMCustomdrawTimesld(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 }
 
-//************************
-// On load button click
-//************************
+//*************************************************************
+// Name:
+// Des:  On load button click
+//*************************************************************
 void CFinalPlayerDlg::OnBnClickedLoadbtn()
 {
 	// TODO: Add your control notification handler code here
@@ -279,35 +280,27 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 	g_dwAudioLen = g_pSoundManager->GetLen();
 	g_dwAudioSize = g_pSoundManager->GetSize();
 
-    //EnablePlayUI( this->m_hWnd, TRUE );*/
-
-
-    // Remember the path for next time
+    // Load video file that has same name with audio file
 	USES_CONVERSION;
 	char * _strFileName= T2A(strFileName);
-  // strcpy( strPath, _strFileName );
-	
-   // char* strLastSlash = strrchr( strPath,'\\' );
-    //strLastSlash[0] = '\0';
-
-	// Load video file that has same name with audio file
 	strcpy( VideoPath, _strFileName );
     char* VideoLastSlash = strrchr( VideoPath, '.' );
     VideoLastSlash[0] = '\0';
 	strcat(VideoLastSlash,".rgb");	
+	
+	// Set up frameReader
 	int w=352, h=288;
-/**/	g_pFrameReader = new FrameReader(VideoPath);
+    g_pFrameReader = new FrameReader(VideoPath);
 	g_pFrameReader->setHeight(h);
 	g_pFrameReader->setWidth(w);
 
+	// Set up frameReader
 	g_pFrameManager = new FrameManager(g_pFrameReader);
-	
 	g_pFrameManager->setFrameRate(30);
 	g_pFrameManager->setBufferSize(6*30);
 	g_pFrameManager->setLoadingPos(90);
 
-	 wstringstream ss;
-	
+	wstringstream ss;	
 	startT = GetTickCount();
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(TEXT("Loading..."));
 	g_pFrameManager->fillBuffer();
@@ -332,17 +325,23 @@ void CFinalPlayerDlg::OnNMReleasedcaptureTimesld(NMHDR *pNMHDR, LRESULT *pResult
 	int iPos = CFinalPlayerDlg::m_TimeSlider.GetPos();
 	
 	int iMax = CFinalPlayerDlg::m_TimeSlider.GetRangeMax();
+	// Audio jump
 	double dPercent = (double)iPos/iMax;
 	AudioJumpping(dPercent);
-	double dPos = g_dwAudioLen * dPercent;
-	ShowCurrentTime((int)dPos);
+
+	// Video jump
+	double dCurrentTime = g_dwAudioLen * dPercent;
+	double dVideoJumpPos = dCurrentTime * g_pFrameManager->getFrameRate();
+	VideoJumpping(dVideoJumpPos);
+	ShowCurrentTime((int)dCurrentTime);
 	*pResult = 0;
 }
 
 
-//************************
-// Audio jumpping
-//************************
+//*************************************************************
+// Name:
+// Des:  Audio jumpping
+//*************************************************************
 HRESULT CFinalPlayerDlg::AudioJumpping(double dPercent)
 {
 	HRESULT hr = 0;
@@ -355,9 +354,19 @@ HRESULT CFinalPlayerDlg::AudioJumpping(double dPercent)
 }
 
 
-//************************
-// On exit button click
-//************************
+//*************************************************************
+// Name:
+// Des:  Video jumpping
+//*************************************************************
+bool CFinalPlayerDlg::VideoJumpping(double dPos)
+{
+	g_pFrameManager->jump(dPos);
+	return true;
+}
+//*************************************************************
+// Name:
+// Des:  On exit button click
+//*************************************************************
 void CFinalPlayerDlg::OnBnClickedCancel()
 {
 	// TODO: Add your control notification handler code here
@@ -371,9 +380,10 @@ SAFE_DELETE(g_pFrameReader);
 	OnCancel();
 }
 
-//************************
-// On play button click
-//************************
+//*************************************************************
+// Name:
+// Des:  On play button click
+//*************************************************************
 void CFinalPlayerDlg::OnBnClickedPlaybtn()
 {
 	// TODO: Add your control notification handler code here
