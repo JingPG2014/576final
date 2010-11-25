@@ -39,6 +39,9 @@ protected:
 	 FrameReader*   g_pFrameReader;
 	 bool           g_bDraw;
 	 bool           g_isPlay;
+	 DWORD          startT;
+	 DWORD          endT;
+	 DWORD          passT;
 
 
 	// Generated message map functions

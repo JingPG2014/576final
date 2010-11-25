@@ -202,6 +202,16 @@ HCURSOR CFinalPlayerDlg::OnQueryDragIcon()
 }
 
 
+void CFinalPlayerDlg::OnNMCustomdrawTimesld(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+}
+
+//************************
+// On load button click
+//************************
 void CFinalPlayerDlg::OnBnClickedLoadbtn()
 {
 	// TODO: Add your control notification handler code here
@@ -273,7 +283,7 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 
 
     // Remember the path for next time
-/*	USES_CONVERSION;
+	USES_CONVERSION;
 	char * _strFileName= T2A(strFileName);
   // strcpy( strPath, _strFileName );
 	
@@ -284,28 +294,37 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 	strcpy( VideoPath, _strFileName );
     char* VideoLastSlash = strrchr( VideoPath, '.' );
     VideoLastSlash[0] = '\0';
-	strcat(VideoLastSlash,".rgb");
-	
+	strcat(VideoLastSlash,".rgb");	
 	int w=352, h=288;
-/*	g_pFrameReader = new FrameReader(VideoPath);
+/**/	g_pFrameReader = new FrameReader(VideoPath);
 	g_pFrameReader->setHeight(h);
 	g_pFrameReader->setWidth(w);
-	//g_pFrameReader->setImagePath();
-	//g_pFrameReader->load();
 
 	g_pFrameManager = new FrameManager(g_pFrameReader);
 	
 	g_pFrameManager->setFrameRate(30);
-	g_pFrameManager->setBufferSize(4);
-	g_pFrameManager->setLoadingPos(60);
+	g_pFrameManager->setBufferSize(6*30);
+	g_pFrameManager->setLoadingPos(90);
 
+	 wstringstream ss;
+	
+	startT = GetTickCount();
+	CFinalPlayerDlg::m_FilePath.SetWindowTextW(TEXT("Loading..."));
 	g_pFrameManager->fillBuffer();
-	//myImage.setImagePath(VideoPath);
-	//myImage.ReadImage(); 
-*/
+	endT = GetTickCount();
+	endT -= startT;
+	ss<<endT;
+	wstring strPos = ss.str();
+	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
+	CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
+
 
 }
 
+
+//************************
+// On slider button released
+//************************
 void CFinalPlayerDlg::OnNMReleasedcaptureTimesld(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	// TODO: Add your control notification handler code here
@@ -320,6 +339,10 @@ void CFinalPlayerDlg::OnNMReleasedcaptureTimesld(NMHDR *pNMHDR, LRESULT *pResult
 	*pResult = 0;
 }
 
+
+//************************
+// Audio jumpping
+//************************
 HRESULT CFinalPlayerDlg::AudioJumpping(double dPercent)
 {
 	HRESULT hr = 0;
@@ -331,15 +354,26 @@ HRESULT CFinalPlayerDlg::AudioJumpping(double dPercent)
 	return hr;
 }
 
+
+//************************
+// On exit button click
+//************************
 void CFinalPlayerDlg::OnBnClickedCancel()
 {
 	// TODO: Add your control notification handler code here
-	// SAFE_DELETE( g_pSound );
-     //SAFE_DELETE( g_pSoundManager );
+	 KillTimer(1);
+	 SAFE_DELETE( g_pSound );
+     SAFE_DELETE( g_pSoundManager );
+SAFE_DELETE(g_pFrameManager);
+SAFE_DELETE(g_pFrameReader);
+
 
 	OnCancel();
 }
 
+//************************
+// On play button click
+//************************
 void CFinalPlayerDlg::OnBnClickedPlaybtn()
 {
 	// TODO: Add your control notification handler code here
@@ -350,14 +384,16 @@ void CFinalPlayerDlg::OnBnClickedPlaybtn()
 
 	if( g_bBufferPaused )
     {
+		OnBnClickedVedioplaybtn();
         // Play the buffer since it is currently paused
         DWORD dwFlags = bLooped ? DSBPLAY_LOOPING : 0L;
 		if( FAILED( hr = g_pSound->Play( 0, dwFlags ) ) )
 		{
-			CFinalPlayerDlg::m_FilePath.SetWindowTextW(TEXT("Play Failed!"));
+			CFinalPlayerDlg::m_FilePath.SetWindowTextW(TEXT("Play Failed!"));		
 			return;
 		
 		}
+		
            
 		// return DXTRACE_ERR( TEXT("Play"), hr );
 
@@ -372,14 +408,17 @@ void CFinalPlayerDlg::OnBnClickedPlaybtn()
         {
             // To pause, just stop the buffer, but don't reset the position
             if( g_pSound )
+			{
                 g_pSound->Stop();
-
+				OnBnClickedStopvediobtn();
+			}
             g_bBufferPaused = TRUE;
 
 			CFinalPlayerDlg::m_PlayBtn.SetWindowTextW(TEXT("Play"));
         }
         else
         {
+			OnBnClickedVedioplaybtn();
             // The buffer is not playing, so play it again
             DWORD dwFlags = bLooped ? DSBPLAY_LOOPING : 0L;
 			if( FAILED( hr = g_pSound->Play( 0, dwFlags ) ) )
@@ -397,6 +436,10 @@ void CFinalPlayerDlg::OnBnClickedPlaybtn()
 
 }
 
+//*************************************************************
+//  Name:
+//  Des: On stop button click
+//*************************************************************
 void CFinalPlayerDlg::OnBnClickedStopbtn()
 {
 	// TODO: Add your control notification handler code here
@@ -405,11 +448,17 @@ void CFinalPlayerDlg::OnBnClickedStopbtn()
 		CFinalPlayerDlg::m_PlayBtn.SetWindowTextW(TEXT("Play"));
 		g_pSound->Stop();	
 		g_pSound->Reset();
+		g_pFrameManager->stop();
+		StopVedio();
 		CFinalPlayerDlg::m_TimeSlider.SetPos(0);
     }
 }
 
 
+//*************************************************************
+// Name:
+// Des: Show current time aside the slider
+//*************************************************************
 void CFinalPlayerDlg::ShowCurrentTime(int pos)
 {
 	int seconds;
@@ -443,33 +492,21 @@ void CFinalPlayerDlg::ShowCurrentTime(int pos)
 	CFinalPlayerDlg::m_TimeTxt.SetWindowTextW(lpPos);
 
 }
-void CFinalPlayerDlg::OnBnClickedVedioplaybtn()
-{
-	// TODO: Add your control notification handler code here
-	//PlayVedio();
-	//g_bDraw =!g_bDraw;
-	//RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
-	//forTest();
-	if(g_pFrameManager== NULL)
-		return;
-
-	g_pFrameManager->jump(1600);
-	this->SetTimer(1,500,NULL);
-}
-
-void CFinalPlayerDlg::OnNMCustomdrawTimesld(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
-	// TODO: Add your control notification handler code here
-	*pResult = 0;
-}
-
+//*************************************************************
+// Name:
+// Des:Play video
+//*************************************************************
 bool CFinalPlayerDlg::PlayVedio()
 {
 	//this->SetTimer(1,1000,NULL);
 	//g_pFrameManager->jump(1600);
+	if(g_pFrameManager->isEnd())
+	{
+		StopVedio();
+		return false;
+	}
 	if(g_pFrameManager->isReady()){
-		this->Invalidate();
+		//this->Invalidate();
         g_pFrameManager->play(this->m_hWnd);
 	    g_isPlay = false;
 	}
@@ -516,29 +553,106 @@ bool CFinalPlayerDlg::PlayVedio()
 	return true;
 }
 
+//*************************************************************
+// Name: OnTimer
+// Des:  Draw one frame
+//*************************************************************
 void CFinalPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	if(++g_iTimer==3)
+	
+	if(g_iTimer==0)
 	{
-		Sleep(1);
-		g_iTimer = 0;
+		startT = GetTickCount();
 	}
-	g_iTime++;
+	if((++g_iTimer)%15==0)
+	{
+
+	passT = GetTickCount();
+		wstringstream ss;
+		
+		passT -= startT;
+		if(passT<500)
+			Sleep(500-passT);
+		endT = GetTickCount();
+		endT -= startT;
+		ss<<endT;
+		wstring strPos = ss.str();
+	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
+	CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
+		startT = GetTickCount();
+	}/**/
+/*	g_iTime++;
     wstringstream ss;
 	ss<<g_iTime;
 	wstring strPos = ss.str();
 	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
 	CFinalPlayerDlg::m_VolumeTxt.SetWindowTextW(lpPos);
-	//g_pFrameManager->play(this->m_hWnd);
+	//g_pFrameManager->play(this->m_hWnd);*/
 	g_isPlay = true;
 	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
+	
 }
 
+//*************************************************************
+// Name:
+// Des:  Pause the video
+//*************************************************************
 bool CFinalPlayerDlg::StopVedio()
 {
 	KillTimer(1);
 	return true;
 }
+//*************************************************************
+// Name:
+// Des:  On video play button click
+// ONLY for test!
+//*************************************************************
+void CFinalPlayerDlg::OnBnClickedVedioplaybtn()
+{
+	// TODO: Add your control notification handler code here
+	//PlayVedio();
+	//g_bDraw =!g_bDraw;
+	//RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
+	//forTest();
+	if(g_pFrameManager== NULL)
+		return;
+
+	DWORD startT,passT,endT,sleepT;
+	 wstringstream ss;
+	//g_pFrameManager->jump(1600);
+	this->SetTimer(1,31,NULL);
+	
+/*	 int run =60;
+	while(run)
+	{
+		g_isPlay = true;
+		startT = GetTickCount();
+		RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
+		passT = GetTickCount();
+		passT -= startT;
+		sleepT = 33-passT;
+		Sleep(sleepT);
+		endT = GetTickCount();
+		endT -= startT;
+		ss<<endT;
+		wstring strPos = ss.str();
+	    LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
+	    CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
+		g_iTime++;
+    wstringstream ss1;
+	ss1<<g_iTime;
+	wstring strPtime = ss1.str();
+	LPCTSTR lpPtime = (LPCTSTR)strPtime.c_str();
+	CFinalPlayerDlg::m_VolumeTxt.SetWindowTextW(lpPtime);
+		//run--;
+	}*/
+}
+
+//*************************************************************
+// Name:
+// Des: On video pasuse button click
+// ONLY for test!!!!!!!!!
+//*************************************************************
 void CFinalPlayerDlg::OnBnClickedStopvediobtn()
 {
 	// TODO: Add your control notification handler code here
@@ -546,6 +660,11 @@ void CFinalPlayerDlg::OnBnClickedStopvediobtn()
 
 }
 
+//*************************************************************
+// Name:
+// Des:
+// ONLY for test!
+//**************************************************************
 void CFinalPlayerDlg::forTest()
 {
 	if(!g_bDraw){
@@ -567,6 +686,11 @@ void CFinalPlayerDlg::forTest()
 	EndPaint(&ps);
 }
 
+//*************************************************************
+// Name:
+// Des:
+// ONLY for test!
+//**************************************************************
 UINT CFinalPlayerDlg::LoadThreadFun(LPVOID lpParam)
 {
 /*	FrameManager* g_pFrameManager;

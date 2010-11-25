@@ -8,6 +8,7 @@ FrameManager::FrameManager(FrameReader* reader)
 	this->iWidth = reader->getWidth();
 	iFrameCount = 0;
 	ready = false;
+	bIsEnd = false;
 }
 
 FrameManager::~FrameManager()
@@ -15,7 +16,11 @@ FrameManager::~FrameManager()
 }
 
 
-/// Set the Height of the frame
+
+//*************************************************************
+// Name:
+// Des:  Set the Height of the frame
+//*************************************************************
 bool FrameManager::setHeight(int iHeight)
 {
 	this->iHeight = iHeight;
@@ -23,7 +28,11 @@ bool FrameManager::setHeight(int iHeight)
 	return true;
 }
 
-/// Set the Width of the frame
+
+//*************************************************************
+// Name:
+// Des:  Set the Width of the frame
+//*************************************************************
 bool FrameManager::setWidth(int iWidth)
 {
 	this->iWidth = iWidth;
@@ -31,33 +40,48 @@ bool FrameManager::setWidth(int iWidth)
 	return true;
 }
 
-/// Set the refill position
+
+//*************************************************************
+// Name:
+// Des:  Set the refill position
+//*************************************************************
 bool FrameManager::setLoadingPos(int iPos)
 {
 	iLoadingPos = iPos;
 	return true;
 }
 
-/// Set the size of buffer by seconds
-bool FrameManager::setBufferSize(int iSec)
+
+//*************************************************************
+// Name:
+// Des: Set the size of buffer by seconds
+//*************************************************************
+bool FrameManager::setBufferSize(int iSize)
 {
-	this->iBufferSize = this->iRate * iSec;
+	this->iBufferSize = iSize;//this->iRate * iSec;
 	return true;
 }
 
-/// Set the frame rate, 30 for this
+//*************************************************************
+// Name:
+// Des:  Set the frame rate, 30 for this
+//*************************************************************
 bool FrameManager::setFrameRate(int iRate)
 {
 	this->iRate = iRate;
 	return true;
 }
 
-//// Fill the buffer for the first time
+
+//*************************************************************
+// Name:
+// Des:   Fill the buffer for the first time
+//*************************************************************
 bool FrameManager::fillBuffer()
 {
 
 	chBuffer = new char*[iWidth*iHeight];
-	loadBuffer(0,iBufferSize);
+	_loadBuffer(0,iBufferSize);
 	iCurrentPos = 0;
 	iStart = 0;
     iRangA = iFrameCount; 
@@ -66,7 +90,10 @@ bool FrameManager::fillBuffer()
 	return true;
 }
 
-/// Refill the buffer from 0 to iCurrentPos
+//*************************************************************
+// Name:
+// Des:  Refill the buffer from 0 to iCurrentPos
+//*************************************************************
 bool FrameManager::reFillBuffer()
 {
 	if(iStart == 0)
@@ -88,38 +115,75 @@ bool FrameManager::reFillBuffer()
 	return true;
 }
 
-/// Call the Thread function _loadBuffer
+//*************************************************************
+// Name:
+// Des:  Call the Thread function _loadBuffer
+//*************************************************************
 bool FrameManager::loadBuffer(int start, int end)
 {
 	loadParam* param;
+	param = (loadParam*)malloc(sizeof(loadParam));
 	    param->reader = reader;
 	    param->chBuffer = chBuffer;
 	    param->start = start;
 	    param->end = end;
-	 AfxBeginThread(_loadBuffer,(LPVOID)param);
+		param->pbIsEnd = &bIsEnd;
+	 AfxBeginThread(_loadBufferThread,(LPVOID)param);
+		//_loadBuffer(start,end);
 
 	return true;
 }
-
-/// Load the buffer in Thread
-UINT FrameManager::_loadBuffer(LPVOID lpParam)
+//*************************************************************
+// Name:
+// Des:  Load buffer
+// Normal version!
+//*************************************************************
+bool FrameManager::_loadBuffer(int start, int end)
+{
+	for(int i =start; i<end; i++)
+	{
+		if(reader->ReadOneFrame())
+			chBuffer[i] = reader->getFrameData();
+		else
+		{
+			bIsEnd = true;
+			break;
+		}
+	}
+	return true;
+}
+//*************************************************************
+// Name:
+// Des:  Load buffer
+// Thread version!
+//*************************************************************
+UINT FrameManager::_loadBufferThread(LPVOID lpParam)
 {
 	loadParam* param = (loadParam*)lpParam;
 	FrameReader* reader = (FrameReader*)param->reader;
 	char** chBuffer= (char**)param->chBuffer;
 	int start = (int)param->start;
 	int end = (int)param->end;
+	bool* pbIsEnd = (bool*)param->pbIsEnd;
 
 	for(int i =start; i<end; i++)
 	{
-		reader->ReadOneFrame();
-		chBuffer[i] = reader->getFrameData();
+		if(reader->ReadOneFrame())
+			chBuffer[i] = reader->getFrameData();
+		else
+		{
+			*pbIsEnd = true;
+			break;
+		}
 	}
 
 	return(0);
 }
 
-/// Jump to the position
+//*************************************************************
+// Name:
+// Des:  Jump the video
+//*************************************************************
 bool  FrameManager::jump(int iPos)
 {
 	iFrameCount = iPos;
@@ -137,17 +201,30 @@ bool  FrameManager::jump(int iPos)
 	return true;
 }
 
-/// Reander a frame
+//*************************************************************
+// Name:
+// Des:  Render one frame
+// Update the current position of buffer
+//*************************************************************
 char* FrameManager::renderOneFrame()
 {
+	
+	char* frame = chBuffer[iCurrentPos];
+	if(!bIsEnd){
 	iCurrentPos++;
 	iFrameCount++;
-	if(iCurrentPos == iLoadingPos)
+	if(iCurrentPos == iLoadingPos||iCurrentPos == iBufferSize)
 		reFillBuffer();
-	return chBuffer[iCurrentPos-1];
+	iCurrentPos %= iBufferSize;
+	}
+	return frame;
 }
 
-/// Stop
+//*************************************************************
+// Name:
+// Des:  Stop the video
+// Reset the video stream and refresh the buffer
+//*************************************************************
 bool FrameManager::stop()
 {
 	iFrameCount = 0;
@@ -156,7 +233,10 @@ bool FrameManager::stop()
 	return true;
 }
 
-/// Play
+//*************************************************************
+// Name:
+// Des:  Draw a frame on the dlg
+//*************************************************************
 bool FrameManager::play(HWND hWnd)
 {
 	PAINTSTRUCT ps;

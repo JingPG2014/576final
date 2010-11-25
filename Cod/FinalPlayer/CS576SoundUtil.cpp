@@ -307,14 +307,20 @@ LFail:
     SAFE_DELETE( apDSBuffer );
     return hr;
 }
-
+//-----------------------------------------------------------------------------
+// Name: CSoundManager::GetSize
+// Desc: Get the time length of the PCM file in seconds
+//-----------------------------------------------------------------------------
 DWORD CSoundManager::GetLen()
 {
 	return m_dwTotalSeconds;
 }
 
 
-
+//-----------------------------------------------------------------------------
+// Name: CSoundManager::GetSize
+// Desc: Get the time length of the PCM file in seconds
+//-----------------------------------------------------------------------------
 DWORD CSoundManager::GetSize()
 {
 	return m_dwSize;

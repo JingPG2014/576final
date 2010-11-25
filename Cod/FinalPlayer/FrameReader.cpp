@@ -4,22 +4,30 @@
 
 FrameReader::FrameReader(char* vedioPath)
 {
-	ifs.open(vedioPath,std::ios::in|std::ios::binary);
+	//ifs.open(vedioPath,std::ios::in|std::ios::binary);
+	IN_FILE = fopen(vedioPath, "rb");
 
 }
 
 FrameReader::~FrameReader() 
 {
-	if(ifs)
-		ifs.close();
+	if(IN_FILE)
+		//ifs.close();
+		abort();
 	if(Data) 
 		delete Data; 
 };
 
 
-void FrameReader::ReadOneFrame()
+//*************************************************************
+// Name:
+// Des: Read one frame from rgb file
+//*************************************************************
+bool FrameReader::ReadOneFrame()
 {
 
+	if(feof(IN_FILE))
+		return false;
 	//FILE *IN_FILE;
 	int i;
 	char *Rbuf = new char[Height*Width]; 
@@ -28,25 +36,25 @@ void FrameReader::ReadOneFrame()
 
 	//IN_FILE = fopen(ImagePath, "rb");
 	
-	if(ifs ==NULL)
+/*	if(ifs ==NULL)
 	{
 		fprintf(stderr, "Error");
 		exit(0);
+	}*/
+	for (i = 0; i < Width*Height; i ++)
+	{
+		Rbuf[i] = fgetc(IN_FILE);
+		//Rbuf[i] = ifs.get();
 	}
 	for (i = 0; i < Width*Height; i ++)
 	{
-		//Rbuf[i] = fgetc(IN_FILE);
-		Rbuf[i] = ifs.get();
+		Gbuf[i] = fgetc(IN_FILE);
+		//Gbuf[i] = ifs.get();
 	}
 	for (i = 0; i < Width*Height; i ++)
 	{
-		//Gbuf[i] = fgetc(IN_FILE);
-		Gbuf[i] = ifs.get();
-	}
-	for (i = 0; i < Width*Height; i ++)
-	{
-		//Bbuf[i] = fgetc(IN_FILE);
-		Bbuf[i] = ifs.get();
+		Bbuf[i] = fgetc(IN_FILE);
+		//Bbuf[i] = ifs.get();
 	}
 
 	Data = new char[Width*Height*3];
@@ -62,10 +70,16 @@ void FrameReader::ReadOneFrame()
 	delete Gbuf;
 	delete Bbuf;
 	
+	return true;
 
 }
 
 
+
+//*************************************************************
+// Set the posistion where to start
+// For the purpose to jump the video
+//*************************************************************
 void FrameReader::setPos(int iPos)
 {
 	double offset=0;
@@ -73,20 +87,37 @@ void FrameReader::setPos(int iPos)
 	//double a = 304128;
 	bits=(Width*Height*3);
 	offset = iPos * bits; //R,G,B per frame
-	ifs.seekg(offset, ios::beg);
+	//ifs.seekg(offset, ios::beg);
+	fseek(IN_FILE,offset,0);
 }
 
+//*************************************************************
+// Name:
+// Des: Reset the video stream
+//*************************************************************
 void FrameReader::reset()
 {
-	ifs.seekg(0, ios::beg);
+	//ifs.seekg(0, ios::beg);
+	fseek(IN_FILE,0,0);
 }
 
+//*************************************************************
+// Name:
+// Des: Load a rgb file
+// ONLY for test!!!
+//*************************************************************
 void FrameReader::load(){
-	ifs.open(ImagePath,std::ios::in|std::ios::binary);
+	//ifs.open(ImagePath,std::ios::in|std::ios::binary);
+	IN_FILE = fopen(ImagePath, "rb");
 
 }
 
+//*************************************************************
+// Name:
+// Des: Close the file stream
+//*************************************************************
 void FrameReader::abort()
 {
-	ifs.close();
+	//ifs.close();
+	fclose(IN_FILE);
 }

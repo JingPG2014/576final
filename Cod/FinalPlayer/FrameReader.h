@@ -19,6 +19,7 @@ private:
 	char	ImagePath[_MAX_PATH];
 	char*	Data;// One frame data
 	ifstream ifs;
+	FILE *IN_FILE;
 
 public:
 	FrameReader(){};
@@ -32,7 +33,7 @@ public:
 	int		getHeight() { return Height; };
 	char*	getFrameData() { return Data; };
 	char*	getImagePath() { return ImagePath; }
-	void	ReadOneFrame();
+	bool	ReadOneFrame();
 	void    setPos(int iPos);
 	void    reset();
 	void    load();

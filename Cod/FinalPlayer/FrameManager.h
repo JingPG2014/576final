@@ -8,6 +8,7 @@ struct LoadParam
 	char** chBuffer;
 	int start;
 	int end;
+	bool* pbIsEnd;
 }
 loadParam;
 
@@ -30,6 +31,7 @@ private:
 	int iStart;
 	FrameReader* reader;
 	bool ready;;
+	bool bIsEnd;
     
 
 	// Public Methods
@@ -41,8 +43,9 @@ public:
 	bool setWidth(int iWidth);
 	bool setHeight(int iheight);
 	bool setLoadingPos(int iPos);
-	bool setBufferSize(int iSec);
+	bool setBufferSize(int iSize);
 	bool setFrameRate(int iRate);
+	bool  isEnd(){ return bIsEnd;}
 	int  getWidth(){ return iWidth;}
 	int  getHeight(){ return iHeight;}
 	bool fillBuffer();
@@ -53,7 +56,8 @@ public:
 	bool jump(int iPos);
 	bool play(HWND hWnd);
 	bool isReady(){ return ready;}
-	static UINT _loadBuffer(LPVOID lpParam);
+	static UINT _loadBufferThread(LPVOID lpParam);
+	bool _loadBuffer(int start, int end);
 	bool loadBuffer(int start, int end);
 
 
