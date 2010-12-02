@@ -24,7 +24,9 @@ private:
 	int iBufferSize;
 	int iRate;// 30 fra/sec
 	int iCurrentPos;
-	int iLoadingPos;// when iCurrentPos come to this position, begin laoding
+	int iFirstLoadingPos;// when iCurrentPos come to this position, begin laoding
+	int iSecLoadingPos;
+	int iThirdLoadingPos;
 	int iFrameCount;// current playing frame count
 	int iRangA;// start form 0, included
 	int iRangB;// Not included

@@ -47,7 +47,7 @@ bool FrameManager::setWidth(int iWidth)
 //*************************************************************
 bool FrameManager::setLoadingPos(int iPos)
 {
-	iLoadingPos = iPos;
+	iFirstLoadingPos = iPos;
 	return true;
 }
 
@@ -59,6 +59,7 @@ bool FrameManager::setLoadingPos(int iPos)
 bool FrameManager::setBufferSize(int iSize)
 {
 	this->iBufferSize = iSize;//this->iRate * iSec;
+	iFirstLoadingPos = iSize/10;
 	return true;
 }
 
@@ -84,8 +85,6 @@ bool FrameManager::fillBuffer()
 	_loadBuffer(0,iBufferSize);
 	iCurrentPos = 0;
 	iStart = 0;
-    iRangA = iFrameCount; 
-	iRangB = iRangA + iBufferSize;
 	ready= true;
 	return true;
 }
@@ -95,23 +94,10 @@ bool FrameManager::fillBuffer()
 // Des:  Refill the buffer from 0 to iCurrentPos
 //*************************************************************
 bool FrameManager::reFillBuffer()
-{
-	if(iStart == 0)
-	{
-		loadBuffer(0, iLoadingPos);
-		iStart = iLoadingPos;
-		iRangA += iLoadingPos;
-		iRangB = iRangA + iBufferSize;
-	}
-	else if(iStart == iLoadingPos)
-	{
-		loadBuffer(iLoadingPos, iBufferSize);
-		iStart = 0;
-		iRangA += iBufferSize - iLoadingPos;
-		iRangB = iRangA + iBufferSize;
-	}
-	
-	
+{	
+	loadBuffer(iStart, iStart+iFirstLoadingPos);
+	iStart += iFirstLoadingPos;
+	iStart %= iBufferSize;
 	return true;
 }
 
@@ -143,7 +129,10 @@ bool FrameManager::_loadBuffer(int start, int end)
 	for(int i =start; i<end; i++)
 	{
 		if(reader->ReadOneFrame())
+		{
 			chBuffer[i] = reader->getFrameData();
+		}
+			
 		else
 		{
 			bIsEnd = true;
@@ -166,10 +155,17 @@ UINT FrameManager::_loadBufferThread(LPVOID lpParam)
 	int end = (int)param->end;
 	bool* pbIsEnd = (bool*)param->pbIsEnd;
 
+	delete lpParam;
+
 	for(int i =start; i<end; i++)
 	{
 		if(reader->ReadOneFrame())
+		{
+			delete chBuffer[i];//char* oldFrame = chBuffer[i];
 			chBuffer[i] = reader->getFrameData();
+			//delete oldFrame;
+		}
+			
 		else
 		{
 			*pbIsEnd = true;
@@ -188,15 +184,16 @@ bool  FrameManager::jump(int iPos)
 {
 	iFrameCount = iPos;
 
-	if(iPos>=iRangA && iPos<iRangB)
+/*	if(iPos>=iRangA && iPos<iRangB)
 	{
 		iCurrentPos = (iStart + (iPos - iRangA))%iBufferSize;
 	}
 	else 
 	{
+	*/
 		reader->setPos(iPos);
 		fillBuffer();
-	}
+//	}
 	
 	return true;
 }
@@ -209,15 +206,15 @@ bool  FrameManager::jump(int iPos)
 char* FrameManager::renderOneFrame()
 {
 	
-	char* frame = chBuffer[iCurrentPos];
+	int currentPosition= iCurrentPos;
 	if(!bIsEnd){
 	iCurrentPos++;
 	iFrameCount++;
-	if(iCurrentPos == iLoadingPos||iCurrentPos == iBufferSize)
+	if(iCurrentPos % iFirstLoadingPos == 0)//== iFirstLoadingPos|| iCurrentPos == iThirdLoadingPos||iCurrentPos == iBufferSize)
 		reFillBuffer();
 	iCurrentPos %= iBufferSize;
 	}
-	return frame;
+	return chBuffer[currentPosition];
 }
 
 //*************************************************************
@@ -259,11 +256,12 @@ bool FrameManager::play(HWND hWnd)
 	bmi.bmiHeader.biCompression = BI_RGB;
 	bmi.bmiHeader.biSizeImage = iWidth * iHeight;
 
-				
+
+	//reader->ReadOneFrame();
 	SetDIBitsToDevice(hdc,
 					  50,80,iWidth,iHeight,
 					  0,0,0,iHeight,
-					  renderOneFrame(),&bmi,DIB_RGB_COLORS);
+					  renderOneFrame(),&bmi,DIB_RGB_COLORS);//
 	EndPaint(hWnd,&ps);
 	//RedrawWindow(hWnd,NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
 	

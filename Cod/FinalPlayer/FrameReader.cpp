@@ -57,6 +57,7 @@ bool FrameReader::ReadOneFrame()
 		//Bbuf[i] = ifs.get();
 	}
 
+
 	Data = new char[Width*Height*3];
 
 	for (i = 0; i < Height*Width; i++)
@@ -65,6 +66,7 @@ bool FrameReader::ReadOneFrame()
 		Data[3*i+1]	= Gbuf[i];
 		Data[3*i+2]	= Rbuf[i];
 	}
+
 
 	delete Rbuf;
 	delete Gbuf;

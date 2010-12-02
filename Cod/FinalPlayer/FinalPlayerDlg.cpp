@@ -297,12 +297,13 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 	// Set up frameReader
 	g_pFrameManager = new FrameManager(g_pFrameReader);
 	g_pFrameManager->setFrameRate(30);
-	g_pFrameManager->setBufferSize(6*30);
-	g_pFrameManager->setLoadingPos(90);
+	g_pFrameManager->setBufferSize(30*30);
+	//g_pFrameManager->setLoadingPos(15);
 
 	wstringstream ss;	
-	startT = GetTickCount();
+	
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(TEXT("Loading..."));
+	startT = GetTickCount();
 	g_pFrameManager->fillBuffer();
 	endT = GetTickCount();
 	endT -= startT;
@@ -325,14 +326,16 @@ void CFinalPlayerDlg::OnNMReleasedcaptureTimesld(NMHDR *pNMHDR, LRESULT *pResult
 	int iPos = CFinalPlayerDlg::m_TimeSlider.GetPos();
 	
 	int iMax = CFinalPlayerDlg::m_TimeSlider.GetRangeMax();
-	// Audio jump
 	double dPercent = (double)iPos/iMax;
-	AudioJumpping(dPercent);
+	
 
 	// Video jump
 	double dCurrentTime = g_dwAudioLen * dPercent;
 	double dVideoJumpPos = dCurrentTime * g_pFrameManager->getFrameRate();
 	VideoJumpping(dVideoJumpPos);
+	
+	// Audio jump
+	AudioJumpping(dPercent);
 	ShowCurrentTime((int)dCurrentTime);
 	*pResult = 0;
 }
@@ -370,7 +373,7 @@ bool CFinalPlayerDlg::VideoJumpping(double dPos)
 void CFinalPlayerDlg::OnBnClickedCancel()
 {
 	// TODO: Add your control notification handler code here
-	 KillTimer(1);
+	 //KillTimer(1);
 	 SAFE_DELETE( g_pSound );
      SAFE_DELETE( g_pSoundManager );
 SAFE_DELETE(g_pFrameManager);
@@ -591,13 +594,12 @@ void CFinalPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
 		startT = GetTickCount();
 	}/**/
-/*	g_iTime++;
+	g_iTime++;
     wstringstream ss;
 	ss<<g_iTime;
 	wstring strPos = ss.str();
 	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
 	CFinalPlayerDlg::m_VolumeTxt.SetWindowTextW(lpPos);
-	//g_pFrameManager->play(this->m_hWnd);*/
 	g_isPlay = true;
 	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
 	
@@ -632,30 +634,32 @@ void CFinalPlayerDlg::OnBnClickedVedioplaybtn()
 	//g_pFrameManager->jump(1600);
 	this->SetTimer(1,31,NULL);
 	
-/*	 int run =60;
+/*int run =30;
+    startT = GetTickCount();
 	while(run)
 	{
-		g_isPlay = true;
-		startT = GetTickCount();
+		g_isPlay = true;	
 		RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
-		passT = GetTickCount();
-		passT -= startT;
-		sleepT = 33-passT;
-		Sleep(sleepT);
-		endT = GetTickCount();
+		//passT = GetTickCount();
+		//passT -= startT;
+		//sleepT = 33-passT;
+		//Sleep(sleepT);
+		
+		g_iTime++;
+        wstringstream ss1;
+	    ss1<<g_iTime;
+	    wstring strPtime = ss1.str();
+	    LPCTSTR lpPtime = (LPCTSTR)strPtime.c_str();
+	    CFinalPlayerDlg::m_VolumeTxt.SetWindowTextW(lpPtime);
+		run--;
+	};
+	endT = GetTickCount();
 		endT -= startT;
+		ss.clear();
 		ss<<endT;
 		wstring strPos = ss.str();
 	    LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
-	    CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
-		g_iTime++;
-    wstringstream ss1;
-	ss1<<g_iTime;
-	wstring strPtime = ss1.str();
-	LPCTSTR lpPtime = (LPCTSTR)strPtime.c_str();
-	CFinalPlayerDlg::m_VolumeTxt.SetWindowTextW(lpPtime);
-		//run--;
-	}*/
+	    CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);*/
 }
 
 //*************************************************************
