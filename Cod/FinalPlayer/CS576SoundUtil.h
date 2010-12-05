@@ -101,7 +101,7 @@ public:
     HRESULT Reset();
 	HRESULT SetPosition(DWORD pos);
     BOOL    IsSoundPlaying();
-	HRESULT GetCurrentPosition();
+	LPDWORD GetCurrentPosition();
 	LPDWORD CurrentPosition();
 };
 

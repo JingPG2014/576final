@@ -39,9 +39,17 @@ protected:
 	 FrameReader*   g_pFrameReader;
 	 bool           g_bDraw;
 	 bool           g_isPlay;
+	 bool           g_isSum;
 	 DWORD          startT;
 	 DWORD          endT;
 	 DWORD          passT;
+	 DWORD          g_dwCounter;
+
+	 int            m_nCurHeight;
+     int            m_nScrollPos;
+     CRect          m_rect;
+	 int            m_iSumIndex[10];
+
 
 
 	// Generated message map functions
@@ -72,9 +80,21 @@ public:
 	void ShowCurrentTime(int pos);
 	bool PlayVedio();
 	bool StopVedio();
+	bool UpdateSlider();
+	bool DrawSummary();
 	
 	CStatic m_VolumeTxt;
 	
 	void forTest();
 	static UINT LoadThreadFun(LPVOID lpParam);
+	CStatic m_PicCtr1;
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	CScrollBar m_HScroll;
+//	afx_msg void OnNMThemeChangedScrollbar1(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnStnClickedPic1();
+	afx_msg void OnStnDblclickPic1();
+	afx_msg void OnBnClickedButton1();
+	CStatic m_MovCtr;
+	CEdit m_EditPic;
 };

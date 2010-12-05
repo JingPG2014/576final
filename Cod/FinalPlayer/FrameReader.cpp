@@ -6,6 +6,8 @@ FrameReader::FrameReader(char* vedioPath)
 {
 	//ifs.open(vedioPath,std::ios::in|std::ios::binary);
 	IN_FILE = fopen(vedioPath, "rb");
+	Data = NULL;
+	SumData = NULL;
 
 }
 
@@ -58,6 +60,7 @@ bool FrameReader::ReadOneFrame()
 	}
 
 
+	//delete Data;
 	Data = new char[Width*Height*3];
 
 	for (i = 0; i < Height*Width; i++)
@@ -79,18 +82,96 @@ bool FrameReader::ReadOneFrame()
 
 
 //*************************************************************
+// Name:
+// Des: Read one frame from rgb file
+//*************************************************************
+bool FrameReader::ReadSummary(double index, int ratio)
+{
+
+	if(feof(IN_FILE))
+		return false;
+	//FILE *IN_FILE;
+	int i;
+	char *Rbuf = new char[Width*Height]; 
+	char *Gbuf = new char[Width*Height]; 
+	char *Bbuf = new char[Width*Height]; 
+
+	int dWidth = Width/ratio;
+	int dHeight = Height/ratio;
+	char *dRbuf = new char[dWidth*dHeight]; 
+	char *dGbuf = new char[dWidth*dHeight]; 
+	char *dBbuf = new char[dWidth*dHeight]; 
+
+	// find the frame by index
+	setPos(index);
+
+	for (i = 0; i < Width*Height; i ++)
+	{
+		Rbuf[i] = fgetc(IN_FILE);
+		//Rbuf[i] = ifs.get();
+	}
+	
+	for (i = 0; i < Width*Height; i ++)
+	{
+		Gbuf[i] = fgetc(IN_FILE);
+		//Gbuf[i] = ifs.get();
+	}
+	for (i = 0; i < Width*Height; i ++)
+	{
+		Bbuf[i] = fgetc(IN_FILE);
+		//Bbuf[i] = ifs.get();
+	}
+
+	// down sampling
+	for(int h=0;h<dHeight;h++)
+		for(int w=0;w<dWidth;w++)
+	{
+		dRbuf[w+h*dWidth] = Rbuf[w*ratio+(h*ratio)*Width];
+		dGbuf[w+h*dWidth] = Gbuf[w*ratio+(h*ratio)*Width];
+		dBbuf[w+h*dWidth] = Bbuf[w*ratio+(h*ratio)*Width];
+
+	}
+
+		delete SumData;
+	SumData = new char[dHeight*dWidth*3];
+
+	for (i = 0; i < dHeight*dWidth; i++)
+	{
+		SumData[3*i]	= dBbuf[i];
+		SumData[3*i+1]	= dGbuf[i];
+		SumData[3*i+2]	= dRbuf[i];
+	}
+
+
+	delete Rbuf;
+	delete Gbuf;
+	delete Bbuf;
+
+	delete dRbuf;
+	delete dGbuf;
+	delete dBbuf;
+
+	reset();
+	
+	return true;
+
+}
+
+
+
+//*************************************************************
 // Set the posistion where to start
 // For the purpose to jump the video
 //*************************************************************
 void FrameReader::setPos(int iPos)
 {
 	double offset=0;
-	double bits=0;
+	double bytes=0;
 	//double a = 304128;
-	bits=(Width*Height*3);
-	offset = iPos * bits; //R,G,B per frame
+	bytes=(Width*Height*3);
+	offset = iPos * bytes; //R,G,B per frame
 	//ifs.seekg(offset, ios::beg);
-	fseek(IN_FILE,offset,0);
+	_fseeki64(IN_FILE,offset,0);
 }
 
 //*************************************************************

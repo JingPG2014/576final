@@ -623,14 +623,14 @@ HRESULT CSound::Stop()
 // Name: CSound::GetCurrentPosition()
 // Desc: Gets the current play position in the buffer
 //-----------------------------------------------------------------------------
-HRESULT CSound::GetCurrentPosition()
+LPDWORD CSound::GetCurrentPosition()
 {
-	LPDWORD currentPos;
+	LPDWORD currentPos = NULL;
 	LPDWORD fail = (LPDWORD)1L;
 	HRESULT hr = 0;
    // for( DWORD i=0; i<m_dwNumBuffers; i++ )
-		hr = m_apDSBuffer[0]->GetCurrentPosition(NULL,currentPos);
-	return hr;
+		hr = m_apDSBuffer[0]->GetCurrentPosition(currentPos,NULL);
+	return currentPos;
 }
 
 LPDWORD CSound::CurrentPosition()

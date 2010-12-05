@@ -27,13 +27,14 @@ private:
 	int iFirstLoadingPos;// when iCurrentPos come to this position, begin laoding
 	int iSecLoadingPos;
 	int iThirdLoadingPos;
-	int iFrameCount;// current playing frame count
+	double iFrameCount;// current playing frame count
 	int iRangA;// start form 0, included
 	int iRangB;// Not included
 	int iStart;
 	FrameReader* reader;
 	bool ready;;
 	bool bIsEnd;
+	int iSumRatio;//summary image down-sampling ratio
     
 
 	// Public Methods
@@ -47,10 +48,12 @@ public:
 	bool setLoadingPos(int iPos);
 	bool setBufferSize(int iSize);
 	bool setFrameRate(int iRate);
+	void setSumRatio(int iRatio){ iSumRatio = iRatio;}
 	bool  isEnd(){ return bIsEnd;}
 	int  getWidth(){ return iWidth;}
 	int  getHeight(){ return iHeight;}
 	int  getFrameRate(){ return iRate;}
+	double  getFrameCount(){ return iFrameCount;}
 	bool fillBuffer();
 	bool reFillBuffer();
 	char* renderOneFrame();
@@ -58,6 +61,7 @@ public:
 	bool stop();
 	bool jump(int iPos);
 	bool play(HWND hWnd);
+	bool drawSummay(HWND hWnd, int* index);
 	bool isReady(){ return ready;}
 	static UINT _loadBufferThread(LPVOID lpParam);
 	bool _loadBuffer(int start, int end);

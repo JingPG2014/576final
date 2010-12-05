@@ -14,10 +14,11 @@ class FrameReader
 {
 
 private:
-	double		Width;
-	double		Height;
+	int		Width;
+	int		Height;
 	char	ImagePath[_MAX_PATH];
 	char*	Data;// One frame data
+	char*   SumData;
 	ifstream ifs;
 	FILE *IN_FILE;
 
@@ -32,8 +33,10 @@ public:
 	int		getWidth() { return Width; };
 	int		getHeight() { return Height; };
 	char*	getFrameData() { return Data; };
+	char*   getSummaryData(){ return SumData;}
 	char*	getImagePath() { return ImagePath; }
 	bool	ReadOneFrame();
+	bool    ReadSummary(double index, int ratio);
 	void    setPos(int iPos);
 	void    reset();
 	void    load();

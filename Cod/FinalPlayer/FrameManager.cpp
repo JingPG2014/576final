@@ -59,7 +59,7 @@ bool FrameManager::setLoadingPos(int iPos)
 bool FrameManager::setBufferSize(int iSize)
 {
 	this->iBufferSize = iSize;//this->iRate * iSec;
-	iFirstLoadingPos = iSize/10;
+	iFirstLoadingPos = iSize/5;
 	return true;
 }
 
@@ -191,8 +191,11 @@ bool  FrameManager::jump(int iPos)
 	else 
 	{
 	*/
-		reader->setPos(iPos);
-		fillBuffer();
+	   // delete chBuffer;
+	for(int i = 0;i<iBufferSize;i++)
+		delete chBuffer[i];
+	reader->setPos(iPos);
+	fillBuffer();
 //	}
 	
 	return true;
@@ -259,11 +262,56 @@ bool FrameManager::play(HWND hWnd)
 
 	//reader->ReadOneFrame();
 	SetDIBitsToDevice(hdc,
-					  50,80,iWidth,iHeight,
+					  0,0,iWidth,iHeight,
 					  0,0,0,iHeight,
 					  renderOneFrame(),&bmi,DIB_RGB_COLORS);//
 	EndPaint(hWnd,&ps);
 	//RedrawWindow(hWnd,NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
+	
+	return true;
+}
+//*************************************************************
+// Name:
+// Des:  Draw a summary on the dlg
+//*************************************************************
+bool FrameManager::drawSummay(HWND hWnd,int* index)
+{
+	PAINTSTRUCT ps;
+	HDC hdc;
+
+	hdc = BeginPaint(hWnd,&ps);
+	
+	// TODO: Add any drawing code here...
+	RECT rt;
+	GetClientRect(hWnd,&rt);
+				
+	BITMAPINFO bmi;
+	CBitmap bitmap;
+	memset(&bmi,0,sizeof(bmi));
+	bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+	bmi.bmiHeader.biWidth = iWidth/iSumRatio;
+	bmi.bmiHeader.biHeight = -iHeight/iSumRatio;  // Use negative height.  DIB is top-down.
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 24;
+	bmi.bmiHeader.biCompression = BI_RGB;
+	bmi.bmiHeader.biSizeImage = (iWidth/iSumRatio) * (iHeight/iSumRatio);
+
+
+	int x,y;
+
+    for(int i =0;i<10;i++)
+    {
+		x = (i)*(iWidth/iSumRatio+0);
+		y = 0;// i<5?0:iHeight/iSumRatio;
+		reader->ReadSummary(index[i], iSumRatio);
+		SetDIBitsToDevice(hdc,
+					  x,y,iWidth/iSumRatio,iHeight/iSumRatio,
+					  0,0,0,iHeight/iSumRatio,
+					  reader->getSummaryData(),&bmi,DIB_RGB_COLORS);
+    }
+	
+	EndPaint(hWnd,&ps);
+    //RedrawWindow(hWnd,NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
 	
 	return true;
 }

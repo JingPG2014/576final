@@ -66,6 +66,10 @@ void CFinalPlayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_TIMESLD, m_TimeSlider);
 	DDX_Control(pDX, IDC_TIMETXT, m_TimeTxt);
 	DDX_Control(pDX, IDC_VLOUMETXT, m_VolumeTxt);
+	DDX_Control(pDX, IDC_PIC1, m_PicCtr1);
+	DDX_Control(pDX, IDC_SCROLLBAR1, m_HScroll);
+	DDX_Control(pDX, IDC_MOVPIC, m_MovCtr);
+	DDX_Control(pDX, IDC_EDITPIC, m_EditPic);
 }
 
 BEGIN_MESSAGE_MAP(CFinalPlayerDlg, CDialog)
@@ -83,6 +87,12 @@ ON_BN_CLICKED(IDC_STOPBTN, &CFinalPlayerDlg::OnBnClickedStopbtn)
 ON_BN_CLICKED(IDC_VEDIOPLAYBTN, &CFinalPlayerDlg::OnBnClickedVedioplaybtn)
 ON_NOTIFY(NM_CUSTOMDRAW, IDC_TIMESLD, &CFinalPlayerDlg::OnNMCustomdrawTimesld)
 ON_BN_CLICKED(IDC_STOPVEDIOBTN, &CFinalPlayerDlg::OnBnClickedStopvediobtn)
+ON_WM_VSCROLL()
+//ON_NOTIFY(NM_THEMECHANGED, IDC_SCROLLBAR1, &CFinalPlayerDlg::OnNMThemeChangedScrollbar1)
+ON_WM_HSCROLL()
+ON_STN_CLICKED(IDC_PIC1, &CFinalPlayerDlg::OnStnClickedPic1)
+ON_STN_DBLCLK(IDC_PIC1, &CFinalPlayerDlg::OnStnDblclickPic1)
+ON_BN_CLICKED(IDC_BUTTON1, &CFinalPlayerDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 
@@ -91,7 +101,10 @@ END_MESSAGE_MAP()
 BOOL CFinalPlayerDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-
+	GetWindowRect(m_rect);
+    m_nScrollPos = 0;
+	CFinalPlayerDlg::m_HScroll.SetScrollRange(0,100);
+	//CFinalPlayerDlg::m_PicCtr1.SetWindowPos(0,6,0,880,72,SWP_NOMOVE);
 	// Add "About..." menu item to system menu.
 
 	// IDM_ABOUTBOX must be in the system command range.
@@ -137,6 +150,7 @@ BOOL CFinalPlayerDlg::OnInitDialog()
     g_bBufferPaused = FALSE;
 	g_bDraw = false;
 	g_isPlay = false;
+	g_isSum = false;
 
 	// set slider
 	CFinalPlayerDlg::m_TimeSlider.SetRange(0,1000);
@@ -190,6 +204,9 @@ void CFinalPlayerDlg::OnPaint()
 		if(g_isPlay)
 			PlayVedio();
 
+		if(g_isSum)
+		    DrawSummary();
+		//UpdateSlider();
 		CDialog::OnPaint();
 	}
 }
@@ -297,20 +314,30 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 	// Set up frameReader
 	g_pFrameManager = new FrameManager(g_pFrameReader);
 	g_pFrameManager->setFrameRate(30);
-	g_pFrameManager->setBufferSize(30*30);
+	g_pFrameManager->setBufferSize(30*10);
+	g_pFrameManager->setSumRatio(4);
 	//g_pFrameManager->setLoadingPos(15);
 
 	wstringstream ss;	
 	
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(TEXT("Loading..."));
+
+	// loading summary
+	g_isSum = true;
+	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
+
 	startT = GetTickCount();
-	g_pFrameManager->fillBuffer();
+	//g_pFrameManager->jump(9000);
+	//g_pFrameManager->fillBuffer();
 	endT = GetTickCount();
 	endT -= startT;
 	ss<<endT;
 	wstring strPos = ss.str();
 	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
+	
+	
+	
 
 
 }
@@ -323,6 +350,7 @@ void CFinalPlayerDlg::OnNMReleasedcaptureTimesld(NMHDR *pNMHDR, LRESULT *pResult
 {
 	// TODO: Add your control notification handler code here
 /**/	
+	
 	int iPos = CFinalPlayerDlg::m_TimeSlider.GetPos();
 	
 	int iMax = CFinalPlayerDlg::m_TimeSlider.GetRangeMax();
@@ -340,6 +368,19 @@ void CFinalPlayerDlg::OnNMReleasedcaptureTimesld(NMHDR *pNMHDR, LRESULT *pResult
 	*pResult = 0;
 }
 
+//*************************************************************
+// Name:
+// Des: Update the position of the Sliderbar
+// ONLY for test!
+//**************************************************************
+bool CFinalPlayerDlg::UpdateSlider()
+{
+	double dPercent;
+	dPercent = (double)g_iTimer/(30*g_dwAudioLen);
+	int iPos = CFinalPlayerDlg::m_TimeSlider.GetRangeMax() * dPercent;
+	CFinalPlayerDlg::m_TimeSlider.SetPos(iPos);
+	return true;
+}
 
 //*************************************************************
 // Name:
@@ -363,7 +404,10 @@ HRESULT CFinalPlayerDlg::AudioJumpping(double dPercent)
 //*************************************************************
 bool CFinalPlayerDlg::VideoJumpping(double dPos)
 {
+	StopVedio();
+	Sleep(2000);
 	g_pFrameManager->jump(dPos);
+	OnBnClickedVedioplaybtn();
 	return true;
 }
 //*************************************************************
@@ -520,7 +564,7 @@ bool CFinalPlayerDlg::PlayVedio()
 	}
 	if(g_pFrameManager->isReady()){
 		//this->Invalidate();
-        g_pFrameManager->play(this->m_hWnd);
+        g_pFrameManager->play(CFinalPlayerDlg::m_MovCtr.m_hWnd);
 	    g_isPlay = false;
 	}
 	//RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
@@ -572,12 +616,12 @@ bool CFinalPlayerDlg::PlayVedio()
 //*************************************************************
 void CFinalPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	
-	if(g_iTimer==0)
+	g_dwCounter = g_pFrameManager->getFrameCount();
+	if(g_dwCounter==0)
 	{
 		startT = GetTickCount();
 	}
-	if((++g_iTimer)%15==0)
+	if(g_dwCounter%15==0)
 	{
 
 	passT = GetTickCount();
@@ -594,9 +638,9 @@ void CFinalPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
 		startT = GetTickCount();
 	}/**/
-	g_iTime++;
+//	g_iTime++;
     wstringstream ss;
-	ss<<g_iTime;
+	ss<<g_dwCounter;
 	wstring strPos = ss.str();
 	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
 	CFinalPlayerDlg::m_VolumeTxt.SetWindowTextW(lpPos);
@@ -712,4 +756,126 @@ UINT CFinalPlayerDlg::LoadThreadFun(LPVOID lpParam)
 	g_pFrameManager->fillBuffer();
 */
 	return(0);
+}
+//*************************************************************
+// Name:
+// Des: Draw summary
+//**************************************************************
+bool  CFinalPlayerDlg::DrawSummary()
+{
+	//g_pFrameManager->play(CFinalPlayerDlg::m_PicCtr1.m_hWnd);//this->m_hWnd);
+	int index[10]={1261,10666,11521,13366,13411,13501,14401,144446,17101,17056};
+	int init = 0;
+/**/	for(int i=0;i<10;i++)
+	{
+		init += 1500;
+		index[i] = init;
+	}
+	//m_iSumIndex = index;
+	//g_pFrameManager->drawSummay(CFinalPlayerDlg::m_PicCtr1.m_hWnd, index);
+	g_pFrameManager->drawSummay(CFinalPlayerDlg::m_EditPic.m_hWnd, index);
+	//g_isSum = false;
+	return true;
+}
+void CFinalPlayerDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	// TODO: Add your message handler code here and/or call default
+	int nDelta;
+	int nMaxPos = m_rect.Height() - m_nCurHeight;
+
+
+	switch (nSBCode)
+	{
+/*	case SB_LINEDOWN:
+		if (m_nScrollPos >= nMaxPos)
+			return;
+		nDelta = min(nMaxPos/100,nMaxPos-m_nScrollPos);
+		break;
+
+	case SB_LINEUP:
+		if (m_nScrollPos <= 0)
+			return;
+		nDelta = -min(nMaxPos/100,m_nScrollPos);
+		break;
+
+         case SB_PAGEDOWN:
+		if (m_nScrollPos >= nMaxPos)
+			return;
+		nDelta = min(nMaxPos/100,nMaxPos-m_nScrollPos);
+		break;
+*/
+	case SB_THUMBPOSITION:
+		nDelta = (int)nPos - m_nScrollPos;
+		break;
+
+/*	case SB_PAGEUP:
+		if (m_nScrollPos <= 0)
+			return;
+		nDelta = -min(nMaxPos/10,m_nScrollPos);
+		break;
+*/	
+         default:
+		return;
+	}
+	m_nScrollPos += nDelta;
+	SetScrollPos(SB_VERT,m_nScrollPos,TRUE);
+	ScrollWindow(0,-nDelta);
+
+
+	CDialog::OnVScroll(nSBCode, nPos, pScrollBar);
+}
+
+
+
+void CFinalPlayerDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	// TODO: Add your message handler code here and/or call default
+	int nDelta;
+	switch (nSBCode)
+	{
+	case SB_THUMBPOSITION:
+		nDelta = (int)nPos - m_nScrollPos;
+		m_nScrollPos += nDelta;
+		CFinalPlayerDlg::m_HScroll.SetScrollPos(m_nScrollPos);
+		CFinalPlayerDlg::m_PicCtr1.ScrollWindow(-nDelta,0);
+		break;
+
+    default:
+		return;
+	}
+
+	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
+}
+
+void CFinalPlayerDlg::OnStnClickedPic1()
+{
+	// TODO: Add your control notification handler code here
+	CPoint point; 
+    GetCursorPos( &point ); 
+
+	CRect rect; 
+	CFinalPlayerDlg::m_PicCtr1.GetClientRect(&rect);
+	CFinalPlayerDlg::m_PicCtr1.ScreenToClient(&point);
+
+	if(rect.PtInRect(point)) 
+    { 
+		 wstringstream ss;
+		 ss<<point.x<<" , "<<point.y;
+         wstring strPos = ss.str();
+	     LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
+         AfxMessageBox(lpPos); 
+     } 
+
+}
+
+void CFinalPlayerDlg::OnStnDblclickPic1()
+{
+	// TODO: Add your control notification handler code here
+	AfxMessageBox(TEXT("123123123")); 
+}
+
+void CFinalPlayerDlg::OnBnClickedButton1()
+{
+	// TODO: Add your control notification handler code here
+	AfxMessageBox(TEXT("123123123"));
 }
