@@ -6,7 +6,7 @@ void KeyFrame::ReadSummary()
 	char Num[10];
 	char c;
 	int n;
-	long Number;
+	int Number;
 
 	IN_FILE = fopen(SummaryPath, "rb");
 
@@ -60,7 +60,7 @@ void KeyFrame::WriteSummary()
 	FILE *IN_FILE;
 	char Num[10];
 	int n;
-	long Number;
+	int Number;
 
 	IN_FILE = fopen(SummaryPath, "wb");
 
@@ -98,27 +98,39 @@ void KeyFrame::WriteSummary()
 void KeyFrame::Summary()
 {
 	FILE *IN_FILE;
-	long tmp1,tmp2;
-	long frmnum = 0;
-	long numfrm;
+	long long tmp1,tmp2;
+	int numfrm, frmnum;
 	unsigned char* temp1 = new unsigned char[Width*Height*3];
 	unsigned char* temp2 = new unsigned char[Width*Height*3];
 	unsigned char* temp3 = new unsigned char[Width*Height*3];
 	double* energy = new double[NumofFrame];
 
+	for(int k = 0; k < NumofFrame; k++){
+		energy[k] = 0;
+	}
+
 	IN_FILE = fopen(VideoPath, "rb");
 
-	tmp1 = ftell(IN_FILE);
-	fseek(IN_FILE, 0, SEEK_END);
+	/*tmp1 = ftell(IN_FILE);
+	fseek(IN_FILE, 0L, SEEK_END);
 	tmp2 = ftell(IN_FILE);
 	numfrm = (tmp2 - tmp1) / (Width*Height*3*sizeof(unsigned char));
-	fseek(IN_FILE, 0, SEEK_SET);
+	fseek(IN_FILE, 0L, SEEK_SET);
+
+	tmp1 = _ftelli64(IN_FILE);
+	_fseeki64(IN_FILE, 0L, SEEK_END);
+	tmp2 = _ftelli64(IN_FILE);
+	numfrm = (tmp2 - tmp1) / (Width*Height*3*sizeof(unsigned char));
+	_fseeki64(IN_FILE, 0L, SEEK_SET);*/
 
 	SummaryData = new int[NumofFrame];
 
+	numfrm = 15000;
+
 	//summary
 	//copy data for 3 frame
-	while(ftell(IN_FILE) != tmp2)
+	frmnum = 0;
+	while(frmnum < numfrm)
 	{
 		if(frmnum == 0)
 		{
@@ -158,10 +170,10 @@ KeyFrame::EnergyComputation(unsigned char* t1,
 							int frmnum,
 							int* sd, 
 							double* energy,
-							int numfrm)
+							int num)
 {
-	double tmp1,tmp2,err,sum;
-	int idx1,idx2,flg,sw;
+	double tmp1,tmp2,vector1,vector2,err,sum,tmp;
+	int idx1,idx2,flg,sw,idx,c;
 	int indx1[9];
 	int indx2[9];
 
@@ -234,6 +246,8 @@ KeyFrame::EnergyComputation(unsigned char* t1,
 				indx1[7] = - sw / 2;	indx2[7] = sw / 2;
 				indx1[8] = - sw / 2;	indx2[8] = sw / 2;
 			}
+			//shifting factor
+			vector1 = sqrt((pow((idx1 - ii), 2.0) + pow((idx2 - jj), 2.0)));
 			//=========================================
 			//search match block in forward frame
 			//=========================================
@@ -300,33 +314,64 @@ KeyFrame::EnergyComputation(unsigned char* t1,
 				indx1[7] = - sw / 2;	indx2[7] = sw / 2;
 				indx1[8] = - sw / 2;	indx2[8] = sw / 2;
 			}
-			//find the smallest value and add it to frame energy
-			if(tmp1 < tmp2) sum += tmp1;
-			else sum += tmp2;
+			//shifting factor
+			vector2 = sqrt((pow((idx1 - ii), 2.0) + pow((idx2 - jj), 2.0)));
+			//sum the smallest value and of both direction and add it to frame energy
+			if(tmp1 != 0 && tmp2 != 0 && vector1 != 0 && vector2 != 0 )
+			{
+				sum = sum + ALPHA * (tmp1 + tmp2) + BETA * (vector1 + vector2);
+			}
+			else sum = sum + ALPHA * (tmp1 + tmp2) + BETA * (vector1 + vector2);
 		}
 	}
 
 	//save as key frame if this frame has smaller energy than those in summary
-	for(int k = 0; k < numfrm; k++){
-		if(energy[k] < sum)
+	c = 0;
+	for(int k = 0; k < num; k++){
+		if(abs(frmnum - sd[k]) < 200)
+		{
+			c++;
+		}
+	}
+	if(c == 0)
+	{
+		tmp = 100000;
+		idx = 0;
+		for(int k = 0; k < num; k++){
+			if(energy[k] < tmp)
+			{
+				tmp = energy[k];
+				idx = k;
+			}
+		}
+		if(energy[idx] < sum && abs(frmnum - sd[idx]) > 100)
+		{
+			energy[idx] = sum;
+			sd[idx] = frmnum;
+		}
+	}
+
+	
+	/*for(int k = 0; k < num; k++){
+		if(energy[k] < sum && abs(frmnum - sd[k]) > 200)
 		{
 			energy[k] = sum;
 			sd[k] = frmnum;
 			break;
 		}
-	}
+	}*/
 
 }
 
 
 void 
 KeyFrame::Sorting(int* sd, 
-				  int numfrm)
+				  int num)
 {
 	int temp = 0;
 	
-	for(int i = 0; i < numfrm - 1; i++){
-		for(int j = i + 1; j < numfrm; j++){
+	for(int i = 0; i < num - 1; i++){
+		for(int j = i + 1; j < num; j++){
 			if(sd[j] < sd[i])
 			{ 
 				temp = sd[i]; 

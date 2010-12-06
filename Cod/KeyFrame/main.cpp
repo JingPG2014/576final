@@ -1,7 +1,4 @@
-#include <iostream>
 #include "KeyFrame.h"
-
-using namespace std;
 
 int main(int argc, char *argv[])
 {
@@ -14,15 +11,15 @@ int main(int argc, char *argv[])
 	}
 
 	KeyFrame K;
-	K.setSummaryPath(argv[3]);
+	K.setSummaryPath(argv[1]);
 	K.setVideoPath(argv[2]);
 	K.setWidth(352);
 	K.setHeight(288);
 	//K.ReadSummary();
 	//K.setSummaryPath(argv[3]);
-	K.setNumofFrame(5);
+	K.setNumofFrame(20);
 	K.Summary();
-	K.WriteSummary();
+    K.WriteSummary();
 
 	return 0;
 }

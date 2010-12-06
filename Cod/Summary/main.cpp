@@ -1,7 +1,7 @@
-#include <iostream>
+//#include <iostream>
 #include "Summary.h"
 
-using namespace std;
+//using namespace std;
 
 int main(int argc, char *argv[])
 {
@@ -18,9 +18,14 @@ int main(int argc, char *argv[])
 	S.setFramePath(argv[2]);
 	S.setWidth(352);
 	S.setHeight(288);
-	S.setNewWidth(70);
-	S.setNewHeight(50);
-	S.ReadSummary();
+	S.setNewWidth(150);
+	S.setNewHeight(75);
+	S.setSIWidth(880);
+	S.setSIHeight(72);
+	S.ReadSummaryData();
+	S.CreateSummaryImage();
+	S.SaveSummaryImage();
+	S.SaveSummaryIndex();
 
 	return 0;
 }
