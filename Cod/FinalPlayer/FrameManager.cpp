@@ -303,7 +303,7 @@ bool FrameManager::play(HWND hWnd)
 // Name:
 // Des:  Draw a summary on the dlg
 //*************************************************************
-bool FrameManager::drawSummay(HWND hWnd,int* index)
+bool FrameManager::drawSummay(HWND hWnd)
 {
 	PAINTSTRUCT ps;
 	HDC hdc;
@@ -313,31 +313,34 @@ bool FrameManager::drawSummay(HWND hWnd,int* index)
 	// TODO: Add any drawing code here...
 	RECT rt;
 	GetClientRect(hWnd,&rt);
+
+	int Width = reader->getSumWidth();
+	int Height = reader->getSumHeight();
 				
 	BITMAPINFO bmi;
 	CBitmap bitmap;
 	memset(&bmi,0,sizeof(bmi));
 	bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-	bmi.bmiHeader.biWidth = iWidth/iSumRatio;
-	bmi.bmiHeader.biHeight = -iHeight/iSumRatio;  // Use negative height.  DIB is top-down.
+	bmi.bmiHeader.biWidth = Width;
+	bmi.bmiHeader.biHeight = -Height;  // Use negative height.  DIB is top-down.
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biBitCount = 24;
 	bmi.bmiHeader.biCompression = BI_RGB;
-	bmi.bmiHeader.biSizeImage = (iWidth/iSumRatio) * (iHeight/iSumRatio);
+	bmi.bmiHeader.biSizeImage = Width*Height;
 
 
-	int x,y;
+	//int x,y;
 
-    for(int i =0;i<10;i++)
-    {
-		x = (i)*(iWidth/iSumRatio+0);
-		y = 0;// i<5?0:iHeight/iSumRatio;
-		reader->ReadSummary(index[i], iSumRatio);
+ //   for(int i =0;i<10;i++)
+ //   {
+	//	x = (i)*(iWidth/iSumRatio+0);
+	//	y = 0;// i<5?0:iHeight/iSumRatio;
+		reader->ReadSummary();
 		SetDIBitsToDevice(hdc,
-					  x,y,iWidth/iSumRatio,iHeight/iSumRatio,
-					  0,0,0,iHeight/iSumRatio,
+					  0,0,Width,Height,
+					  0,0,0,Height,
 					  reader->getSummaryData(),&bmi,DIB_RGB_COLORS);
-    }
+ //   }
 	
 	EndPaint(hWnd,&ps);
     //RedrawWindow(hWnd,NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );

@@ -241,6 +241,8 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
     static TCHAR strFileName[MAX_PATH] = TEXT("");
     static TCHAR strPath[MAX_PATH] = TEXT("");
 	static CHAR VideoPath[MAX_PATH] = "";//TEXT("");
+	static CHAR SummaryPath[MAX_PATH] = "";
+	static CHAR IndexPath[MAX_PATH] = "";
 
     // Setup the OPENFILENAME structure
 	OPENFILENAME ofn = { sizeof(OPENFILENAME), this->m_hWnd, NULL,
@@ -304,13 +306,28 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
     char* VideoLastSlash = strrchr( VideoPath, '.' );
     VideoLastSlash[0] = '\0';
 	strcat(VideoLastSlash,".rgb");	
+
+	// get summary and index file path
+	strcpy(SummaryPath,_strFileName);
+	VideoLastSlash = strrchr( SummaryPath, '.' );
+    VideoLastSlash[0] = '\0';
+	strcat(VideoLastSlash,".sum");
+
+	strcpy(IndexPath,_strFileName);
+	VideoLastSlash = strrchr( IndexPath, '.' );
+    VideoLastSlash[0] = '\0';
+	strcat(VideoLastSlash,".idx");	
 	
 	// Set up frameReader
 	int w=352, h=288;
     g_pFrameReader = new FrameReader(VideoPath);
 	g_pFrameReader->setHeight(h);
 	g_pFrameReader->setWidth(w);
+	g_pFrameReader->setSumWidth(880);
+	g_pFrameReader->setSumHeight(72);
 	g_pFrameReader->setSound(g_pSound);
+	g_pFrameReader->setSummaryPath(SummaryPath);
+	g_pFrameReader->setIndexPath(IndexPath);
 
 	// Set up frameReader
 	g_pFrameManager = new FrameManager(g_pFrameReader);
@@ -764,18 +781,18 @@ UINT CFinalPlayerDlg::LoadThreadFun(LPVOID lpParam)
 bool  CFinalPlayerDlg::DrawSummary()
 {
 	//g_pFrameManager->play(CFinalPlayerDlg::m_PicCtr1.m_hWnd);//this->m_hWnd);
-	int index[10]={1261,10666,11521,13366,13411,13501,14401,144446,17101,17056};
-	int init = 0;
-/**/	for(int i=0;i<10;i++)
-	{
-		init += 1500;
-		index[i] = init;
-	}
-	//m_iSumIndex = index;
-
-    for(int i =0 ;i<10;i++)
-		m_iSumIndex[i] = index[i];
-	g_pFrameManager->drawSummay(CFinalPlayerDlg::m_PicCtr1.m_hWnd, m_iSumIndex);
+//	int index[10]={1261,10666,11521,13366,13411,13501,14401,144446,17101,17056};
+//	int init = 0;
+///**/	for(int i=0;i<10;i++)
+//	{
+//		init += 1500;
+//		index[i] = init;
+//	}
+//	//m_iSumIndex = index;
+//
+//    for(int i =0 ;i<10;i++)
+//		m_iSumIndex[i] = index[i];
+	g_pFrameManager->drawSummay(CFinalPlayerDlg::m_PicCtr1.m_hWnd);
 	//g_pFrameManager->drawSummay(CFinalPlayerDlg::m_EditPic.m_hWnd, index);
 	g_isSum = false;
 	return true;
@@ -863,11 +880,11 @@ void CFinalPlayerDlg::OnStnClickedPic1()
 	if(rect.PtInRect(point)) 
     { 
 		 wstringstream ss; 
-		 int i = point.x/90;
+		 //int i = point.x/90;
 		
-		 
+		 int pos = g_pFrameReader->getIdxData(point.x, point.y);
 		  
-		 VideoJumpping(m_iSumIndex[i]);
+		 VideoJumpping(pos);
 		 double percent = g_pFrameReader->getPercent();
 		 ss<<point.x<<" , "<<point.y<<":"<< percent ;
          wstring strPos = ss.str();

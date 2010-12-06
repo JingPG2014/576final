@@ -17,10 +17,10 @@ FrameReader::FrameReader(char* videoPath)
 
 FrameReader::~FrameReader() 
 {
-	if(IN_FILE)
+	//if(IN_FILE)
 		//ifs.close();
 		//abort();
-		endFileMapping();
+	endFileMapping();
 	if(Data) 
 		delete Data; 
 };
@@ -253,9 +253,17 @@ bool FrameReader::ReadOneFrame()
 // Name:
 // Des: Read one frame from rgb file
 //*************************************************************
-bool FrameReader::ReadSummary(double index, int ratio)
+bool FrameReader::ReadSummary()
 {
 
+	int Width = SumWidth;
+	int Height = SumHeight;
+	FILE *IN_SUM = fopen(SummaryPath, "rb");
+	FILE *IN_IDX = fopen(IndexPath, "rb");
+	if(IN_SUM == NULL)
+		AfxMessageBox(TEXT("Sum file cant open!"));
+	if(IN_IDX ==NULL )
+		AfxMessageBox(TEXT("Indxe file cant open!"));
 	/*if(feof(IN_FILE))
 		return false;*/
 	if (pFileBegin == NULL)
@@ -265,66 +273,77 @@ bool FrameReader::ReadSummary(double index, int ratio)
         }
 	//FILE *IN_FILE;
 	int i;
-	char *Rbuf = new char[Width*Height]; 
+	/*char *Rbuf = new char[Width*Height]; 
 	char *Gbuf = new char[Width*Height]; 
-	char *Bbuf = new char[Width*Height]; 
+	char *Bbuf = new char[Width*Height]; */
 
-	int dWidth = Width/ratio;
+	/*int dWidth = Width/ratio;
 	int dHeight = Height/ratio;
 	char *dRbuf = new char[dWidth*dHeight]; 
 	char *dGbuf = new char[dWidth*dHeight]; 
-	char *dBbuf = new char[dWidth*dHeight]; 
+	char *dBbuf = new char[dWidth*dHeight];*/ 
 
 	// find the frame by index
-	setPos(index);
+	//setPos(index);
 
-	for (i = 0; i < Width*Height; i ++)
-	{
-		//Rbuf[i] = fgetc(IN_FILE);
-		Rbuf[i] =  *pFileCurrent++;
-	}
-	
-	for (i = 0; i < Width*Height; i ++)
-	{
-		//Gbuf[i] = fgetc(IN_FILE);
-		Gbuf[i] =  *pFileCurrent++;
-	}
-	for (i = 0; i < Width*Height; i ++)
-	{
-		//Bbuf[i] = fgetc(IN_FILE);
-		Bbuf[i] =  *pFileCurrent++;
-	}
+	//for (i = 0; i < Width*Height; i ++)
+	//{
+	//	Rbuf[i] = fgetc(IN_SUM);
+	//	//Rbuf[i] =  *pFileCurrent++;
+	//}
+	//
+	//for (i = 0; i < Width*Height; i ++)
+	//{
+	//	Gbuf[i] = fgetc(IN_SUM);
+	//	//Gbuf[i] =  *pFileCurrent++;
+	//}
+	//for (i = 0; i < Width*Height; i ++)
+	//{
+	//	Bbuf[i] = fgetc(IN_SUM);
+	//	//Bbuf[i] =  *pFileCurrent++;
+	//}
 
 	// down sampling
-	for(int h=0;h<dHeight;h++)
+	/*for(int h=0;h<dHeight;h++)
 		for(int w=0;w<dWidth;w++)
 	{
 		dRbuf[w+h*dWidth] = Rbuf[w*ratio+(h*ratio)*Width];
 		dGbuf[w+h*dWidth] = Gbuf[w*ratio+(h*ratio)*Width];
 		dBbuf[w+h*dWidth] = Bbuf[w*ratio+(h*ratio)*Width];
 
-	}
+	}*/
 
-		delete SumData;
-	SumData = new char[dHeight*dWidth*3];
+	//delete SumData;
+	SumData = new char[Height*Width*3];
 
-	for (i = 0; i < dHeight*dWidth; i++)
+	for (i = 0; i < Height*Width; i++)
 	{
-		SumData[3*i]	= dBbuf[i];
-		SumData[3*i+1]	= dGbuf[i];
-		SumData[3*i+2]	= dRbuf[i];
+		SumData[3*i]	= fgetc(IN_SUM);//Rbuf[i];
+		SumData[3*i+1]	= fgetc(IN_SUM);//Gbuf[i];
+		SumData[3*i+2]	= fgetc(IN_SUM);//Bbuf[i];
 	}
 
+	IdxData = new int[Height*Width];
+	int idx=0;
+	/*for(int h=0;h<Height;h++)
+		for(int w=0;w<Width;w++)
+		{
+		   fscanf(IN_IDX,"%d",&idx );
+		   IdxData[w+h*Width] = idx;
+		}*/
+	fread(IdxData, sizeof(int), Width*Height, IN_IDX);
 
-	delete Rbuf;
+	/*delete Rbuf;
 	delete Gbuf;
-	delete Bbuf;
+	delete Bbuf;*/
 
-	delete dRbuf;
+	/*delete dRbuf;
 	delete dGbuf;
-	delete dBbuf;
+	delete dBbuf;*/
 
-	reset();
+//	reset();
+	fclose(IN_SUM);
+	fclose(IN_IDX);
 	
 	return true;
 

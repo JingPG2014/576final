@@ -66,7 +66,7 @@ public:
 	bool stop();
 	bool jump(int iPos);
 	bool play(HWND hWnd);
-	bool drawSummay(HWND hWnd, int* index);
+	bool drawSummay(HWND hWnd);
 	bool isReady(){ return ready;}
 	static UINT _loadBufferThread(LPVOID lpParam);
 	bool _loadBuffer(int start, int end, char** chBuffer);
