@@ -7,7 +7,7 @@ FrameManager::FrameManager(FrameReader* reader)
 	this->iHeight = reader->getHeight();
 	this->iWidth = reader->getWidth();
 	iFrameCount = 0;
-	ready = false;
+	ready = true;//false;
 	bIsEnd = false;
 }
 
@@ -59,7 +59,7 @@ bool FrameManager::setLoadingPos(int iPos)
 bool FrameManager::setBufferSize(int iSize)
 {
 	this->iBufferSize = iSize;//this->iRate * iSec;
-	iFirstLoadingPos = iSize/5;
+	iFirstLoadingPos = iSize/3;
 	return true;
 }
 
@@ -78,11 +78,33 @@ bool FrameManager::setFrameRate(int iRate)
 // Name:
 // Des:   Fill the buffer for the first time
 //*************************************************************
-bool FrameManager::fillBuffer()
+//bool FrameManager::fillBuffer()
+//{
+//
+//	chBuffer = new char*[iWidth*iHeight];
+//	_loadBuffer(0,iBufferSize);
+//	iCurrentPos = 0;
+//	iStart = 0;
+//	ready= true;
+//	return true;
+//}
+//*************************************************************
+// Name:
+// Des:   Fill multiple buffers at different threads
+//*************************************************************
+bool FrameManager::fillBufferEx()
 {
 
-	chBuffer = new char*[iWidth*iHeight];
-	_loadBuffer(0,iBufferSize);
+	chBuffer = 	new char*[iBufferSize];
+	chBuffer2 = new char*[iBufferSize];
+	//for(int i =0; i<5;i++){
+	_loadBuffer(0,iBufferSize,chBuffer);
+	AfxMessageBox(TEXT("i feel good"));
+	/*_loadBuffer(0,iBufferSize,chBuffer2);
+	AfxMessageBox(TEXT("i feel so good!"));*/
+	//_loadBuffer(0,iBufferSize,chBuffer2);
+	//AfxMessageBox(TEXT("i fell very good!"));
+	//}
 	iCurrentPos = 0;
 	iStart = 0;
 	ready= true;
@@ -115,6 +137,9 @@ bool FrameManager::loadBuffer(int start, int end)
 	    param->end = end;
 		param->pbIsEnd = &bIsEnd;
 	 AfxBeginThread(_loadBufferThread,(LPVOID)param);
+	 
+	/* param->chBuffer = chBuffer2;
+	 AfxBeginThread(_loadBufferThread,(LPVOID)param);*/
 		//_loadBuffer(start,end);
 
 	return true;
@@ -124,7 +149,7 @@ bool FrameManager::loadBuffer(int start, int end)
 // Des:  Load buffer
 // Normal version!
 //*************************************************************
-bool FrameManager::_loadBuffer(int start, int end)
+bool FrameManager::_loadBuffer(int start, int end, char ** chBuffer)
 {
 	for(int i =start; i<end; i++)
 	{
@@ -192,10 +217,10 @@ bool  FrameManager::jump(int iPos)
 	{
 	*/
 	   // delete chBuffer;
-	for(int i = 0;i<iBufferSize;i++)
-		delete chBuffer[i];
+	/*for(int i = 0;i<iBufferSize;i++)
+		delete chBuffer[i];*/
 	reader->setPos(iPos);
-	fillBuffer();
+	//fillBufferEx();
 //	}
 	
 	return true;
@@ -229,7 +254,7 @@ bool FrameManager::stop()
 {
 	iFrameCount = 0;
 	reader->reset();
-	fillBuffer();
+	//fillBufferEx();
 	return true;
 }
 
@@ -259,13 +284,17 @@ bool FrameManager::play(HWND hWnd)
 	bmi.bmiHeader.biCompression = BI_RGB;
 	bmi.bmiHeader.biSizeImage = iWidth * iHeight;
 
-
-	//reader->ReadOneFrame();
-	SetDIBitsToDevice(hdc,
+	if(reader->ReadOneFrame())
+	{
+		SetDIBitsToDevice(hdc,
 					  0,0,iWidth,iHeight,
 					  0,0,0,iHeight,
-					  renderOneFrame(),&bmi,DIB_RGB_COLORS);//
+					  reader->getFrameData(),&bmi,DIB_RGB_COLORS);
+	}
+	else
+		bIsEnd = true;
 	EndPaint(hWnd,&ps);
+	iFrameCount++;
 	//RedrawWindow(hWnd,NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );
 	
 	return true;

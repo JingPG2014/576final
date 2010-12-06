@@ -22,7 +22,6 @@
 #define IDC_SCROLLBAR1                  1016
 #define IDC_BUTTON1                     1017
 #define IDC_MOVPIC                      1018
-#define IDC_EDITPIC                     1019
 #define IDC_EDIT1                       1020
 
 // Next default values for new objects

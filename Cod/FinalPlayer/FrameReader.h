@@ -6,6 +6,7 @@
 
 #include "stdafx.h"
 #include "resource.h"
+#include "CS576SoundUtil.h"
 #include <stdio.h>
 #include <fstream>
 using namespace std;
@@ -19,8 +20,19 @@ private:
 	char	ImagePath[_MAX_PATH];
 	char*	Data;// One frame data
 	char*   SumData;
+	char**  pFileBeginA;
+	char*   pFileBegin;
+	char*   pFileCurrent;
+	int     iFileCurrentIndex;// index of file view
+	int     iFileCount;
+	int     iFrameCount;
 	ifstream ifs;
 	FILE *IN_FILE;
+	HANDLE hFileMap;
+	DWORD dwBlockBytes;
+	 __int64 qwFileSize;
+	 __int64 qwFileOffset;
+	 CSound*  g_pSound;
 
 public:
 	FrameReader(){};
@@ -30,6 +42,7 @@ public:
 	void	setHeight(int h) { Height = h; }; 
 	void	setImageData(char *img ) { Data = img; };
 	void	setImagePath(char *path) { strcpy(ImagePath, path); }
+	void    setSound(CSound* g_pSound){this->g_pSound = g_pSound;}
 	int		getWidth() { return Width; };
 	int		getHeight() { return Height; };
 	char*	getFrameData() { return Data; };
@@ -41,5 +54,10 @@ public:
 	void    reset();
 	void    load();
 	void    abort();
+	bool    beginFileMapping(char* videoPath);
+	bool    endFileMapping();
+	bool    getFileView();
+	__int64 getFileSize(){ return qwFileSize;}
 
+	double  getPercent();
 };

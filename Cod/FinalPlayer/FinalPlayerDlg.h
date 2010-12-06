@@ -28,8 +28,9 @@ protected:
 			//-----------------------------------------------------------------------------
 // Defines, constants, and global variables
 //-----------------------------------------------------------------------------
+	
      CSoundManager* g_pSoundManager;
-     CSound*        g_pSound; 
+     CSound*        g_pSound;
      BOOL           g_bBufferPaused;
 	 DWORD          g_dwAudioLen;
 	 DWORD          g_dwAudioSize;
@@ -39,6 +40,7 @@ protected:
 	 FrameReader*   g_pFrameReader;
 	 bool           g_bDraw;
 	 bool           g_isPlay;
+	 bool           g_isPlaying;
 	 bool           g_isSum;
 	 DWORD          startT;
 	 DWORD          endT;
@@ -96,5 +98,7 @@ public:
 	afx_msg void OnStnDblclickPic1();
 	afx_msg void OnBnClickedButton1();
 	CStatic m_MovCtr;
-	CEdit m_EditPic;
+	//CEdit m_EditPic;
+
+	friend FrameReader;
 };

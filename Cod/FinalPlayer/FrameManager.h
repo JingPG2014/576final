@@ -21,6 +21,8 @@ private:
 	int	iHeight;
 	char* chFrame;
 	char** chBuffer;
+	char** chBuffer2;
+	int iBufferNum;
 	int iBufferSize;
 	int iRate;// 30 fra/sec
 	int iCurrentPos;
@@ -47,14 +49,17 @@ public:
 	bool setHeight(int iheight);
 	bool setLoadingPos(int iPos);
 	bool setBufferSize(int iSize);
+	bool setBufferNum(int iBufferNum){ this->iBufferNum = iBufferNum;}
 	bool setFrameRate(int iRate);
 	void setSumRatio(int iRatio){ iSumRatio = iRatio;}
 	bool  isEnd(){ return bIsEnd;}
 	int  getWidth(){ return iWidth;}
 	int  getHeight(){ return iHeight;}
 	int  getFrameRate(){ return iRate;}
+	int  getBufferNum(){ return iBufferNum;}
 	double  getFrameCount(){ return iFrameCount;}
-	bool fillBuffer();
+	//bool fillBuffer();
+	bool fillBufferEx();
 	bool reFillBuffer();
 	char* renderOneFrame();
 	bool pause();
@@ -64,8 +69,7 @@ public:
 	bool drawSummay(HWND hWnd, int* index);
 	bool isReady(){ return ready;}
 	static UINT _loadBufferThread(LPVOID lpParam);
-	bool _loadBuffer(int start, int end);
+	bool _loadBuffer(int start, int end, char** chBuffer);
 	bool loadBuffer(int start, int end);
-
 
 };

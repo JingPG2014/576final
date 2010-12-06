@@ -6,7 +6,7 @@
 #include "FinalPlayerDlg.h"
 #include <sstream>
 #include <string>
-using namespace std;
+using namespace std; 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -69,7 +69,6 @@ void CFinalPlayerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PIC1, m_PicCtr1);
 	DDX_Control(pDX, IDC_SCROLLBAR1, m_HScroll);
 	DDX_Control(pDX, IDC_MOVPIC, m_MovCtr);
-	DDX_Control(pDX, IDC_EDITPIC, m_EditPic);
 }
 
 BEGIN_MESSAGE_MAP(CFinalPlayerDlg, CDialog)
@@ -159,6 +158,7 @@ BOOL CFinalPlayerDlg::OnInitDialog()
 	ShowCurrentTime(0);
 	g_iTimer = 0;
 	g_iTime = 0;
+	g_isPlaying = false;
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -310,11 +310,12 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
     g_pFrameReader = new FrameReader(VideoPath);
 	g_pFrameReader->setHeight(h);
 	g_pFrameReader->setWidth(w);
+	g_pFrameReader->setSound(g_pSound);
 
 	// Set up frameReader
 	g_pFrameManager = new FrameManager(g_pFrameReader);
 	g_pFrameManager->setFrameRate(30);
-	g_pFrameManager->setBufferSize(30*10);
+	g_pFrameManager->setBufferSize(30*60);
 	g_pFrameManager->setSumRatio(4);
 	//g_pFrameManager->setLoadingPos(15);
 
@@ -328,17 +329,13 @@ void CFinalPlayerDlg::OnBnClickedLoadbtn()
 
 	startT = GetTickCount();
 	//g_pFrameManager->jump(9000);
-	//g_pFrameManager->fillBuffer();
+	//g_pFrameManager->fillBufferEx();
 	endT = GetTickCount();
 	endT -= startT;
 	ss<<endT;
 	wstring strPos = ss.str();
 	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
-	
-	
-	
-
 
 }
 
@@ -404,10 +401,11 @@ HRESULT CFinalPlayerDlg::AudioJumpping(double dPercent)
 //*************************************************************
 bool CFinalPlayerDlg::VideoJumpping(double dPos)
 {
-	StopVedio();
-	Sleep(2000);
+	//StopVedio();
+	
 	g_pFrameManager->jump(dPos);
-	OnBnClickedVedioplaybtn();
+	//Sleep(2000);
+	//OnBnClickedVedioplaybtn();
 	return true;
 }
 //*************************************************************
@@ -420,8 +418,8 @@ void CFinalPlayerDlg::OnBnClickedCancel()
 	 //KillTimer(1);
 	 SAFE_DELETE( g_pSound );
      SAFE_DELETE( g_pSoundManager );
-SAFE_DELETE(g_pFrameManager);
-SAFE_DELETE(g_pFrameReader);
+     SAFE_DELETE(g_pFrameManager);
+     SAFE_DELETE(g_pFrameReader);
 
 
 	OnCancel();
@@ -637,8 +635,8 @@ void CFinalPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 	LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
 	CFinalPlayerDlg::m_FilePath.SetWindowTextW(lpPos);
 		startT = GetTickCount();
-	}/**/
-//	g_iTime++;
+	}
+
     wstringstream ss;
 	ss<<g_dwCounter;
 	wstring strPos = ss.str();
@@ -677,6 +675,8 @@ void CFinalPlayerDlg::OnBnClickedVedioplaybtn()
 	 wstringstream ss;
 	//g_pFrameManager->jump(1600);
 	this->SetTimer(1,31,NULL);
+	/* g_isPlay = true;
+	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW  );*/
 	
 /*int run =30;
     startT = GetTickCount();
@@ -772,9 +772,12 @@ bool  CFinalPlayerDlg::DrawSummary()
 		index[i] = init;
 	}
 	//m_iSumIndex = index;
-	//g_pFrameManager->drawSummay(CFinalPlayerDlg::m_PicCtr1.m_hWnd, index);
-	g_pFrameManager->drawSummay(CFinalPlayerDlg::m_EditPic.m_hWnd, index);
-	//g_isSum = false;
+
+    for(int i =0 ;i<10;i++)
+		m_iSumIndex[i] = index[i];
+	g_pFrameManager->drawSummay(CFinalPlayerDlg::m_PicCtr1.m_hWnd, m_iSumIndex);
+	//g_pFrameManager->drawSummay(CFinalPlayerDlg::m_EditPic.m_hWnd, index);
+	g_isSum = false;
 	return true;
 }
 void CFinalPlayerDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
@@ -859,11 +862,20 @@ void CFinalPlayerDlg::OnStnClickedPic1()
 
 	if(rect.PtInRect(point)) 
     { 
-		 wstringstream ss;
-		 ss<<point.x<<" , "<<point.y;
+		 wstringstream ss; 
+		 int i = point.x/90;
+		
+		 
+		  
+		 VideoJumpping(m_iSumIndex[i]);
+		 double percent = g_pFrameReader->getPercent();
+		 ss<<point.x<<" , "<<point.y<<":"<< percent ;
          wstring strPos = ss.str();
 	     LPCTSTR lpPos = (LPCTSTR)strPos.c_str();
-         AfxMessageBox(lpPos); 
+		 AfxMessageBox(lpPos);
+		 AudioJumpping(percent);
+		 //OnBnClickedPlaybtn();
+		
      } 
 
 }
